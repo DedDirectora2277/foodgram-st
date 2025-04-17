@@ -5,6 +5,8 @@ from djoser.serializers import (
     UserSerializer as BaseUserSerializer
 )
 
+from .fields import Base64ImageField
+
 
 User = get_user_model()
 
@@ -71,3 +73,16 @@ class UserSerializer(BaseUserSerializer):
         print(f'Проверка подписки {request.user} на {obj}. Заглушка!')
 
         return False
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обновления аватара пользователя через Base64 JSON.
+    """
+
+    avatar = Base64ImageField(required=True, allow_null=False)
+
+    class Meta:
+        model = User
+
+        fields = ('avatar',)

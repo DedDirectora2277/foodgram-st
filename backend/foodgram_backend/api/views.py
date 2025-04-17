@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Exists, OuterRef
+from django.views import View
 from rest_framework import status, viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser
@@ -25,6 +27,7 @@ from .serializers import (
 )
 from .permissions import IsAuthorOrReadOnly
 from .filters import RecipeFilter
+from .utils import encode_base62, decode_base62
 
 
 User = get_user_model()
@@ -182,6 +185,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     @action(
+        detail=True,
+        methods=['get'],
+        url_path='get-link',
+        permission_classes=[permissions.AllowAny]
+    )
+    def get_short_link(self, request, pk=None):
+        """
+        Возвращает абсолютную короткую ссылку для данного рецепта.
+        Формат: "http://<домен>/s/<base62_id>/"
+        """
+
+        recipe = self.get_object()
+        short_id = encode_base62(recipe.id)
+
+        relative_short_path = f'/s/{short_id}/'
+        absolute_short_link = request.build_absolute_uri(
+            relative_short_path
+        )
+        return Response(
+            {'short-link': absolute_short_link},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(
         detail=False,
         methods=['get'],
         permission_classes=[permissions.IsAuthenticated]
@@ -192,3 +219,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_501_NOT_IMPLEMENTED
         )
 
+
+class RecipeShortLinkRedirectView(View):
+    """
+    View для обработки коротких ссылок /s/<short_id>/.
+    Декодирует short_id, находит рецепт и редиректит
+    на страницу рецепта.
+    """
+    def get(self, request, short_id=None):
+        if short_id is None:
+             raise Http404("Короткий идентификатор не предоставлен.")
+        try:
+            recipe_id = decode_base62(short_id)
+        except ValueError:
+            raise Http404("Некорректная короткая ссылка.")
+
+        recipe = get_object_or_404(Recipe, pk=recipe_id)
+
+        frontend_recipe_path = f"/recipes/{recipe.id}/"
+
+        absolute_frontend_url = request.build_absolute_uri(
+            frontend_recipe_path
+        )
+
+        return redirect(absolute_frontend_url)

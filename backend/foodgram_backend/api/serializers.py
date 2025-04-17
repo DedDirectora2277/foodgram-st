@@ -5,7 +5,10 @@ from djoser.serializers import (
     UserSerializer as BaseUserSerializer
 )
 
+from recipes.models import Ingredient
+
 from .fields import Base64ImageField
+
 
 
 User = get_user_model()
@@ -86,3 +89,11 @@ class AvatarSerializer(serializers.ModelSerializer):
         model = User
 
         fields = ('avatar',)
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализацтор модели Ingredient."""
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')

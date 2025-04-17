@@ -1,12 +1,18 @@
 from django.contrib.auth import get_user_model
-from rest_framework import status
+from rest_framework import status, viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from djoser.views import UserViewSet as DjoserUserViewSet
 
-from .serializers import UserSerializer, AvatarSerializer
+from recipes.models import Ingredient
+
+from .serializers import (
+    UserSerializer,
+    AvatarSerializer,
+    IngredientSerializer
+)
 
 
 User = get_user_model()
@@ -55,3 +61,19 @@ class UserViewSet(DjoserUserViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet для просмотра ингредиентов.
+    Доступен всем ролям пользователей.
+    Поддерживает поиск по названию.
+    """
+
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['^name'] # Поиск по началу названия
+

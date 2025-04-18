@@ -163,8 +163,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             if relation_exists:
                 return Response(
-                    {'detail': f'Рецепт уже добавлен в'
-                     '{model._meta.verbose_name_plural}.'},
+                    {'detail': f'Рецепт уже добавлен в '
+                     f'{model._meta.verbose_name_plural}.'},
                      status=status.HTTP_400_BAD_REQUEST
                 )
             model.objects.create(user=user, recipe=recipe)

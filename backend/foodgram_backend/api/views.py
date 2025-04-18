@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.http import Http404
+from django.http import Http404, HttpResponse 
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Sum
 from django.views import View
 
 from rest_framework import (
@@ -20,7 +20,8 @@ from recipes.models import (
     Ingredient,
     Recipe,
     Favorite,
-    ShoppingCart
+    ShoppingCart,
+    RecipeIngredient
 )
 from subscriptions.models import Subscription
 
@@ -34,7 +35,9 @@ from .serializers import (
 )
 from .permissions import IsAuthorOrReadOnly
 from .filters import RecipeFilter
-from .utils import encode_base62, decode_base62
+from .utils import (
+    encode_base62, decode_base62, generate_shopping_list_content
+)
 
 
 User = get_user_model()
@@ -306,6 +309,40 @@ class RecipeViewSet(viewsets.ModelViewSet):
             {'detail': 'Функионал не разработан'},
             status=status.HTTP_501_NOT_IMPLEMENTED
         )
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='download_shopping_cart',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def download_shopping_cart(self, request):
+        """
+        Формирует и возвращает текстовый файл со списком покупок
+        для текущего пользователя.
+        """
+        user = request.user
+
+        ingredients_summary = RecipeIngredient.objects.filter(
+            recipe__in_shopping_cart__user=user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            total_amount=Sum('amount')
+        ).order_by('ingredient__name')
+
+        shopping_list_content = generate_shopping_list_content(
+            ingredients_summary
+        )
+
+        response = HttpResponse(
+            shopping_list_content,
+            content_type='text/plain; charset=utf-8'
+        )
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+
+        return response
 
 
 class RecipeShortLinkRedirectView(View):

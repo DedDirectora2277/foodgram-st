@@ -3,12 +3,17 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Exists, OuterRef
 from django.views import View
-from rest_framework import status, viewsets, permissions, filters
+
+from rest_framework import (
+    status, viewsets, permissions, filters, generics
+)
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from djoser.views import UserViewSet as DjoserUserViewSet
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 from recipes.models import (
@@ -17,13 +22,15 @@ from recipes.models import (
     Favorite,
     ShoppingCart
 )
+from subscriptions.models import Subscription
 
 from .serializers import (
     UserSerializer,
     AvatarSerializer,
     IngredientSerializer,
     RecipeReadSerializer,
-    RecipeWriteSerializer
+    RecipeWriteSerializer,
+    SubscriptionSerializer
 )
 from .permissions import IsAuthorOrReadOnly
 from .filters import RecipeFilter
@@ -76,6 +83,86 @@ class UserViewSet(DjoserUserViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='subscribe',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def subscribe(self, request, id=None):
+        """
+        Подписывает или отписывает текущего пользователя
+        от пользователя по id.
+        """
+
+        user = request.user
+        author = get_object_or_404(User, id=id)
+
+        if user == author:
+            return Response(
+                {'detail': 'Вы не можете подписываться на самого себя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_exists = Subscription.objects.filter(
+            user=user, author=author
+        ).exists()
+
+        if request.method == 'POST':
+            if subscription_exists:
+                return Response(
+                    {'detail': 'Вы уже подписаны на этого пользователя'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Subscription.objects.create(user=user, author=author)
+
+            serializer = SubscriptionSerializer(
+                author, context={'request': request}
+            )
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED)
+
+        elif request.method == 'DELETE':
+            if not subscription_exists:
+                return Response(
+                    {
+                        'detail': 
+                        'Вы не были подписаны на этого пользователя'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            deleted_count, _ = Subscription.objects.filter(
+                user=user, author=author
+            ).delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='subscriptions',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def subscriptions(self, request):
+        user = request.user
+        queryset = User.objects.filter(
+            follower__user=user
+        ).prefetch_related('recipes')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SubscriptionSerializer(
+                page, many=True, context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
+
+        serializer = SubscriptionSerializer(
+            queryset, many=True, context={'request': request}
+        )
+        return Response(serializer.data)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -171,7 +258,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer = RecipeReadSerializer(recipe, context={
                 'request': request
             })
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED)
         
         elif request.method == 'DELETE':
             if not relation_exists:

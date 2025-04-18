@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UserViewSet,
     IngredientViewSet,
-    RecipeViewSet
+    RecipeViewSet,
 )
 
 
@@ -29,5 +29,6 @@ router_v1.register(
 )
 
 urlpatterns = [
-    path('', include(router_v1.urls))
+    path('', include(router_v1.urls)),
+
 ]

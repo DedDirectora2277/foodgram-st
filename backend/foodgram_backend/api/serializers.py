@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.conf import settings
 from rest_framework import serializers
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
@@ -285,3 +286,57 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             context=self.context
         ).data
 
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    """Краткий сериализатор для рецепта (для списка подписок)"""
+
+    image = Base64ImageField(read_only=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = fields
+
+
+class SubscriptionSerializer(UserSerializer):
+    """
+    Сериализатор для отображения авторов, на которых подписан пользователь.
+    Наследуется от UserSerializer, добавляет кол-во рецептов и их
+    сокращенный список
+    """
+
+    is_subscribed = serializers.BooleanField(default=True)
+    recipes_count = serializers.SerializerMethodField(read_only=True)
+    recipes = serializers.SerializerMethodField(read_only=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('recipes_count', 'recipes')
+        read_only_fields = fields
+
+    def get_recipes_count(self, obj):
+        """Возвращает общее количество рецептов автора."""
+
+        return obj.recipes.count()
+    
+    def get_recipes(self, obj):
+        """Возвращает краткий список рецептов"""
+
+        request = self.context.get('request')
+
+        limit_str = request.query_params.get(
+            'recipes_limit',
+            getattr(settings, 'RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT', 3)
+        )
+        try:
+            limit = int(limit_str)
+            if limit < 0:
+                limit = 0
+        except (ValueError, TypeError):
+            limit = getattr(settings,
+                            'RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT', 3)
+
+        recipes_queryset = obj.recipes.all()[:limit]
+        serializer = RecipeShortSerializer(
+            recipes_queryset, many=True, context=self.context
+        )
+        return serializer.data

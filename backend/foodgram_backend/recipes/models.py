@@ -2,6 +2,12 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
+from constants import(
+    RECIPE_NAME_MAX_LENGTH,
+    INGREDIENT_NAME_MAX_LENGTH,
+    INGREDIENT_UNIT_MAX_LENGTH,
+)
+
 
 User = get_user_model()
 
@@ -11,13 +17,13 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название ингредиента',
-        max_length=200,
+        max_length=INGREDIENT_NAME_MAX_LENGTH,
         db_index=True,
     )
 
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
-        max_length=50,
+        max_length=INGREDIENT_UNIT_MAX_LENGTH,
     )
 
     class Meta:
@@ -47,7 +53,7 @@ class Recipe(models.Model):
 
     name = models.CharField(
         verbose_name='Название рецепта',
-        max_length=200,
+        max_length=RECIPE_NAME_MAX_LENGTH,
         db_index=True
     )
 
@@ -88,7 +94,7 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ['-pub_date']
-    
+
     def __str__(self):
         return f'{self.name} (Автор: {self.author.username})'
 

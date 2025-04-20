@@ -2,6 +2,13 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
+from constants import (
+    USER_EMAIL_MAX_LENGTH,
+    USER_FIRST_NAME_MAX_LENGTH,
+    USER_LAST_NAME_MAX_LENGTH,
+    USER_USERNAME_MAX_LENGTH
+)
+
 
 class User(AbstractUser):
     """
@@ -19,13 +26,13 @@ class User(AbstractUser):
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
         unique=True,
-        max_length=254
+        max_length=USER_EMAIL_MAX_LENGTH
     )
 
     # Переопределение username
     username = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=150,
+        max_length=USER_USERNAME_MAX_LENGTH,
         unique=True,
         help_text=(
             'Обязательное поле. Не более 150 символов. '
@@ -43,14 +50,14 @@ class User(AbstractUser):
     # Переопределение first_name
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150,
+        max_length=USER_FIRST_NAME_MAX_LENGTH,
         blank=True
     )
 
     # Переопределение last_name
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150,
+        max_length=USER_LAST_NAME_MAX_LENGTH,
         blank=True
     )
 

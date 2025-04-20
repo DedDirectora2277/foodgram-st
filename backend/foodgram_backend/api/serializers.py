@@ -7,6 +7,8 @@ from djoser.serializers import (
     UserSerializer as BaseUserSerializer
 )
 
+from constants import RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT
+
 from recipes.models import (
     Ingredient,
     Recipe,
@@ -323,17 +325,15 @@ class SubscriptionSerializer(UserSerializer):
 
         request = self.context.get('request')
 
-        limit_str = request.query_params.get(
-            'recipes_limit',
-            getattr(settings, 'RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT', 3)
-        )
+        default_limit = RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT
+        limit_str = request.query_params.get('recipes_limit',
+                                             default_limit)
         try:
             limit = int(limit_str)
             if limit < 0:
                 limit = 0
         except (ValueError, TypeError):
-            limit = getattr(settings,
-                            'RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT', 3)
+            limit = default_limit
 
         recipes_queryset = obj.recipes.all()[:limit]
         serializer = RecipeShortSerializer(

@@ -7,7 +7,11 @@ from djoser.serializers import (
     UserSerializer as BaseUserSerializer
 )
 
-from constants import RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT
+from constants import (
+    RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT,
+    MIN_COOKING_TIME_VALUE,
+    MIN_AMOUNT_VALUE
+)
 
 from recipes.models import (
     Ingredient,
@@ -230,7 +234,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         
         for item in ingredients:
-            if item['amount'] < 1:
+            if item['amount'] < MIN_AMOUNT_VALUE:
                 raise serializers.ValidationError(
                     'Количество ингредиента должно быть не меньше 1.'
                 )
@@ -240,7 +244,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate_cooking_time(self, value):
         """Проверяем, что время приготовления положительное"""
 
-        if value < 1:
+        if value < MIN_COOKING_TIME_VALUE:
             raise serializers.ValidationError(
                 'Время приготовления должно быть не меньше 1 минуты.'
             )

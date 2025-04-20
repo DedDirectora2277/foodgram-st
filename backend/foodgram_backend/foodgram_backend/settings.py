@@ -97,7 +97,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler'
 }
@@ -105,10 +105,14 @@ REST_FRAMEWORK = {
 # Настройки Djoser
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USER_CREATE_PASSWORD_RETYPE': False,
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
-    'SET_PASSWORD_RETYPE': True,
+    'SET_PASSWORD_RETYPE': False,
 
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    },
     'SERIALIZERS': {
         'user_create': 'api.serializers.UserCreateSerializer',
         'user': 'api.serializers.UserSerializer',

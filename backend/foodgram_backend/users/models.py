@@ -1,12 +1,23 @@
+import re
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import RegexValidator
 
 from constants import (
     USER_EMAIL_MAX_LENGTH,
     USER_FIRST_NAME_MAX_LENGTH,
     USER_LAST_NAME_MAX_LENGTH,
-    USER_USERNAME_MAX_LENGTH
+    USER_USERNAME_MAX_LENGTH,
+    USERNAME_INVALID_MESSAGE,
+    ALLOW_UNICODE_USERNAMES
+)
+
+
+validate_username_regex = RegexValidator(
+    regex=r'^[\w.@+-]+$',
+    message=USERNAME_INVALID_MESSAGE,
+    flags=re.ASCII if not ALLOW_UNICODE_USERNAMES else 0
 )
 
 
@@ -20,7 +31,7 @@ class User(AbstractUser):
     """
 
     # Валидатор используется ниже для username
-    username_validator = UnicodeUsernameValidator
+    username_validator = validate_username_regex
 
     # Переопределение поля email, чтобы сделать его уникальным
     email = models.EmailField(
@@ -50,15 +61,13 @@ class User(AbstractUser):
     # Переопределение first_name
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=USER_FIRST_NAME_MAX_LENGTH,
-        blank=True
+        max_length=USER_FIRST_NAME_MAX_LENGTH
     )
 
     # Переопределение last_name
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=USER_LAST_NAME_MAX_LENGTH,
-        blank=True
+        max_length=USER_LAST_NAME_MAX_LENGTH
     )
 
     # Переопределение is_staff

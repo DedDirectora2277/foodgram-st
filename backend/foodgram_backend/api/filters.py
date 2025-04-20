@@ -1,5 +1,6 @@
 from django_filters import rest_framework as filters
 from recipes.models import Recipe, Favorite, ShoppingCart
+from rest_framework import filters as rest_filters
 
 
 class RecipeFilter(filters.FilterSet):
@@ -29,3 +30,11 @@ class RecipeFilter(filters.FilterSet):
         if user.is_authenticated and value:
             return queryset.filter(in_shopping_cart__user=user)
         return queryset
+
+
+class IngredientNameSearchFilter(rest_filters.SearchFilter):
+    """
+    Кастомный SearchFilter, который использует GET-параметр 'name'
+    вместо стандартного 'search'.
+    """
+    search_param = "name"

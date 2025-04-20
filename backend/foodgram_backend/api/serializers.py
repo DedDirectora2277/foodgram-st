@@ -77,19 +77,13 @@ class UserSerializer(BaseUserSerializer):
 
         request = self.context.get('request')
 
-        # Если нет запроса или если пользователь анонимный, то не подписан
         if request is None or not request.user.is_authenticated:
             return False
 
-        # Пользователь не может быть подписан сам на себя
         if request.user == obj:
             return False
 
-        # return obj.follower.filter(user=request.user).exists
-
-        print(f'Проверка подписки {request.user} на {obj}. Заглушка!')
-
-        return False
+        return obj.follower.filter(user=request.user).exists()
 
 
 class AvatarSerializer(serializers.ModelSerializer):
@@ -204,7 +198,8 @@ class IngredientAmountWriteSerializer(serializers.Serializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и обновления рецептов"""
 
-    ingredients = IngredientAmountWriteSerializer(many=True)
+    ingredients = IngredientAmountWriteSerializer(many=True,
+                                                  required=True)
     image = Base64ImageField(required=True, allow_null=False)
     author = UserSerializer(read_only=True)
 
@@ -284,6 +279,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             self._create_ingredients(recipe, ingredients_data)
 
         return recipe
+    
+    def validate(self, data):
+        instance = getattr(self, 'instance', None)
+
+        if instance and 'ingredients' not in data:
+             raise serializers.ValidationError(
+                 "Поле 'ingredients' обязательно при обновлении рецепта."
+             )
+
+        return data
     
     def to_representation(self, instance):
         """При ответе используем сериализатор для чтения"""

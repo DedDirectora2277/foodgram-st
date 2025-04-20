@@ -5,12 +5,12 @@ from django.db.models import Exists, OuterRef, Sum
 from django.views import View
 
 from rest_framework import (
-    status, viewsets, permissions, filters, generics
+    status, viewsets, permissions, filters
 )
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 from djoser.views import UserViewSet as DjoserUserViewSet
 
@@ -26,6 +26,7 @@ from recipes.models import (
 from subscriptions.models import Subscription
 
 from .serializers import (
+    RecipeShortSerializer,
     UserSerializer,
     AvatarSerializer,
     IngredientSerializer,
@@ -34,7 +35,7 @@ from .serializers import (
     SubscriptionSerializer
 )
 from .permissions import IsAuthorOrReadOnly
-from .filters import RecipeFilter
+from .filters import RecipeFilter, IngredientNameSearchFilter
 from .utils import (
     encode_base62, decode_base62, generate_shopping_list_content
 )
@@ -50,12 +51,24 @@ class UserViewSet(DjoserUserViewSet):
     """
 
     serializer_class = UserSerializer
+    queryset = User.objects.all()
+    
+    def get_permissions(self):
+        """
+        Возвращает IsAuthenticatedOrReadOnly для list и retrieve,
+        а для остальных действий полагается на
+        стандартную логику Djoser/DRF.
+        """
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticatedOrReadOnly()]
+
+        return super().get_permissions()
 
     @action(
         methods=['put', 'delete'],
         detail=False,
         url_path='me/avatar',
-        permission_classes=[IsAuthenticated],
+        permission_classes=[permissions.IsAuthenticated],
         parser_classes=[JSONParser]
     )
     def avatar(self, request, *args, **kwargs):
@@ -68,13 +81,15 @@ class UserViewSet(DjoserUserViewSet):
 
         if request.method == 'PUT':
             serializer = AvatarSerializer(
-                user, data=request.data, partial=True
+                user, data=request.data
             )
             serializer.is_valid(raise_exception=True)
 
             serializer.save()
 
-            response_serializer = self.get_serializer(user)
+            response_serializer = AvatarSerializer(
+                user, context={'request': request}
+            )
             return Response(
                 response_serializer.data, status=status.HTTP_200_OK
             )
@@ -179,15 +194,14 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['^name'] # Поиск по началу названия
+    filter_backends = [IngredientNameSearchFilter]
+    search_fields = ['^name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для управления рецептами"""
 
     queryset = Recipe.objects.all()
-
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = RecipeFilter
@@ -258,9 +272,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                      status=status.HTTP_400_BAD_REQUEST
                 )
             model.objects.create(user=user, recipe=recipe)
-            serializer = RecipeReadSerializer(recipe, context={
-                'request': request
-            })
+            serializer = RecipeShortSerializer(
+                recipe, context={'request': request}
+            )
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
         

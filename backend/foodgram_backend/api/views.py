@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.http import Http404, HttpResponse 
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Exists, OuterRef, Sum
 from django.views import View
@@ -10,7 +10,6 @@ from rest_framework import (
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 
 from djoser.views import UserViewSet as DjoserUserViewSet
 
@@ -52,7 +51,7 @@ class UserViewSet(DjoserUserViewSet):
 
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    
+
     def get_permissions(self):
         """
         Возвращает IsAuthenticatedOrReadOnly для list и retrieve,
@@ -93,15 +92,15 @@ class UserViewSet(DjoserUserViewSet):
             return Response(
                 response_serializer.data, status=status.HTTP_200_OK
             )
-        
+
         elif request.method == 'DELETE':
             if user.avatar:
                 user.avatar.delete(save=True)
 
             return Response(status=status.HTTP_204_NO_CONTENT)
-        
+
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -145,20 +144,20 @@ class UserViewSet(DjoserUserViewSet):
             if not subscription_exists:
                 return Response(
                     {
-                        'detail': 
+                        'detail':
                         'Вы не были подписаны на этого пользователя'
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             deleted_count, _ = Subscription.objects.filter(
                 user=user, author=author
             ).delete()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
-        
+
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
     @action(
         detail=False,
         methods=['get'],
@@ -211,10 +210,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """
         Аннотирование queryset статусами для авторизованных пользователей
         """
-        
+
         user = self.request.user
-        queryset = Recipe.objects.select_related('author')\
+        queryset = (
+            Recipe.objects
+            .select_related('author')
             .prefetch_related('recipe_ingredients__ingredient')
+        )
         if user.is_authenticated:
             queryset = queryset.annotate(
                 is_favorited=Exists(
@@ -222,22 +224,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                             recipe_id=OuterRef('pk'))
                 ),
                 is_in_shopping_cart=Exists(
-                    ShoppingCart.objects\
-                        .filter(user=user, recipe_id=OuterRef('pk'))
+                    ShoppingCart.objects
+                    .filter(user=user, recipe_id=OuterRef('pk'))
                 )
             )
         return queryset
-    
+
     def get_serializer_class(self, *args, **kwargs):
         """Выбор сериализатора в зависимости от действия"""
 
         if self.action in ('create', 'update', 'partial_update'):
             return RecipeWriteSerializer
         return RecipeReadSerializer
-    
+
     def perform_create(self, serializer):
         """Установка автора при создании рецепта"""
-        
+
         serializer.save(author=self.request.user)
 
     @action(
@@ -247,7 +249,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk=None):
         return self._manage_user_recipe_relation(request, pk, Favorite)
-    
+
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -256,7 +258,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         return self._manage_user_recipe_relation(request, pk,
                                                  ShoppingCart)
-    
+
     def _manage_user_recipe_relation(self, request, pk, model):
         user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
@@ -269,7 +271,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(
                     {'detail': f'Рецепт уже добавлен в '
                      f'{model._meta.verbose_name_plural}.'},
-                     status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             model.objects.create(user=user, recipe=recipe)
             serializer = RecipeShortSerializer(
@@ -277,18 +279,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
-        
+
         elif request.method == 'DELETE':
             if not relation_exists:
                 return Response(
                     {'detail':
                      f'Рецепта нет в {model._meta.verbose_name_plural}.'},
-                     status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             model.objects.filter(user=user, recipe=recipe).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
     @action(
         detail=True,
         methods=['get'],
@@ -311,17 +313,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(
             {'short-link': absolute_short_link},
             status=status.HTTP_200_OK
-        )
-    
-    @action(
-        detail=False,
-        methods=['get'],
-        permission_classes=[permissions.IsAuthenticated]
-    )
-    def download_shopping_cart(self, request):
-        return Response(
-            {'detail': 'Функионал не разработан'},
-            status=status.HTTP_501_NOT_IMPLEMENTED
         )
 
     @action(
@@ -354,20 +345,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
             shopping_list_content,
             content_type='text/plain; charset=utf-8'
         )
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
 
         return response
 
 
 class RecipeShortLinkRedirectView(View):
     """
-    View для обработки коротких ссылок /s/<short_id>/.
+    View для обработки коротких ссылок
+    /s/<short_id>/.
     Декодирует short_id, находит рецепт и редиректит
     на страницу рецепта.
     """
+
     def get(self, request, short_id=None):
         if short_id is None:
-             raise Http404("Короткий идентификатор не предоставлен.")
+            raise Http404("Короткий идентификатор не предоставлен.")
         try:
             recipe_id = decode_base62(short_id)
         except ValueError:

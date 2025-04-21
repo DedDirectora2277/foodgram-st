@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 from django.conf import settings
@@ -129,7 +128,7 @@ class Command(BaseCommand):
         summary = (
             f'Загрузка завершена. '
             f'Добавлено новых: {created_count}, '
-            f'Пропущено (уже существовали или некорректные данные): {skipped_count}, '
+            f'Пропущено: {skipped_count}, '
             f'Ошибок при сохранении: {error_count}.'
         )
 

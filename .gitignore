@@ -1,5 +1,6 @@
 frontend/node_modules
 infra/frontend/build
+backend/foodgram_backend/meida
 .env
 
 # Byte-compiled / optimized / DLL files
@@ -107,6 +108,7 @@ celerybeat.pid
 
 # Environments
 .env
+*.env
 .venv
 .venv/
 .env/

@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.conf import settings
 from rest_framework import serializers
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
@@ -22,7 +21,6 @@ from recipes.models import (
 )
 
 from .fields import Base64ImageField
-
 
 
 User = get_user_model()
@@ -50,7 +48,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
 class UserSerializer(BaseUserSerializer):
     """
     Сериализатор для отображения данных пользователей.
-    Включает поле is_subscribed для проверки 
+    Включает поле is_subscribed для проверки
     подписки текущего пользователя.
     """
 
@@ -162,7 +160,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return related_model.objects.filter(
             user=request.user, recipe=obj
         ).exists()
-        
+
     def get_is_favorited(self, obj):
         """
         Проверяет, добавлен ли рецепт в избранное для текущего
@@ -170,7 +168,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         """
 
         return self._get_user_recipe_relation(obj, Favorite)
-        
+
     def get_is_in_shopping_cart(self, obj):
         """
         Проверяет, добавлен ли рецепт в список покупок текущего
@@ -227,15 +225,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Ингредиенты в рецепте не должны повторяться.'
             )
-        
+
         for item in ingredients:
             if item['amount'] < MIN_AMOUNT_VALUE:
                 raise serializers.ValidationError(
                     'Количество ингредиента должно быть не меньше 1.'
                 )
-        
+
         return ingredients
-        
+
     def validate_cooking_time(self, value):
         """Проверяем, что время приготовления положительное"""
 
@@ -244,7 +242,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть не меньше 1 минуты.'
             )
         return value
-        
+
     def _create_ingredients(self, recipe, ingredients_data):
         """
         Вспомогательный метод для создания связей Recipe-Ingredient
@@ -257,7 +255,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingredient_item['amount']
             ) for ingredient_item in ingredients_data
         ])
-        
+
     @transaction.atomic
     def create(self, validated_data):
         """Создает новый рецепт и его ингредиенты"""
@@ -266,7 +264,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         self._create_ingredients(recipe, ingredients_data)
         return recipe
-        
+
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновляет существующий рецепт и его ингредиенты"""
@@ -279,17 +277,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             self._create_ingredients(recipe, ingredients_data)
 
         return recipe
-    
+
     def validate(self, data):
         instance = getattr(self, 'instance', None)
 
         if instance and 'ingredients' not in data:
-             raise serializers.ValidationError(
-                 "Поле 'ingredients' обязательно при обновлении рецепта."
-             )
+            raise serializers.ValidationError(
+                "Поле 'ingredients' обязательно при обновлении рецепта."
+            )
 
         return data
-    
+
     def to_representation(self, instance):
         """При ответе используем сериализатор для чтения"""
         return RecipeReadSerializer(
@@ -328,7 +326,7 @@ class SubscriptionSerializer(UserSerializer):
         """Возвращает общее количество рецептов автора."""
 
         return obj.recipes.count()
-    
+
     def get_recipes(self, obj):
         """Возвращает краткий список рецептов"""
 

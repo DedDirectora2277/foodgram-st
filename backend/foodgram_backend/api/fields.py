@@ -23,15 +23,15 @@ class Base64ImageField(serializers.ImageField):
                 raise serializers.ValidationError(
                     'Некорректный формат Base64 изображения'
                 ) from e
-            
+
             data = ContentFile(decoded_file, name=filename)
 
         return super().to_internal_value(data)
-    
+
     def to_representation(self, value):
         if not value:
             return None
-        
+
         request = self.context.get('request', None)
 
         if request is not None:

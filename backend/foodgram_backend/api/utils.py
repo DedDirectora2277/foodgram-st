@@ -1,5 +1,4 @@
 import string
-import base64
 
 
 BASE62_ALPHABET = string.digits + string.ascii_letters
@@ -13,7 +12,7 @@ def encode_base62(number):
         raise ValueError('Число должно быть неотрицательным целым.')
     if number == 0:
         return BASE62_ALPHABET[0]
-    
+
     encoded = ''
     while number > 0:
         number, remainder = divmod(number, BASE)
@@ -46,7 +45,7 @@ def generate_shopping_list_content(ingredients_queryset):
     Queryset должен содержать словари с ключами:
     'ingredient__name', 'ingredient__measurement_unit', 'total_amount'.
     """
-    
+
     shopping_list_parts = ['Список покупок:\n']
 
     if not ingredients_queryset:

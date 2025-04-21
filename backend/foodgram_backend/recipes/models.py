@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
-from constants import(
+from constants import (
     RECIPE_NAME_MAX_LENGTH,
     INGREDIENT_NAME_MAX_LENGTH,
     INGREDIENT_UNIT_MAX_LENGTH,
@@ -37,7 +37,7 @@ class Ingredient(models.Model):
                 fields=['name', 'measurement_unit'],
                 name='unique_ingredient_unit'
             )
-        ] # Гарантия уникальности пары Название + Ед. измер.
+        ]  # Гарантия уникальности пары Название + Ед. измер.
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'

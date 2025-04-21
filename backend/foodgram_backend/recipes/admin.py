@@ -60,12 +60,12 @@ class RecipeAdmin(BaseAdminSettings):
                 '<img src="{}" with="80" height="50" />', obj.image.url
             )
         return "Нет изображения"
-    
+
     get_image_preview.short_description = 'Первью изображения'
 
     def favorited_count(self, obj):
         return obj.favorited_by.count()
-    
+
     favorited_count.short_description = 'В избранном (раз)'
     favorited_count.admin_order_field = 'favorited_by__count'
 

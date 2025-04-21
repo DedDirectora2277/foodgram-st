@@ -2,13 +2,13 @@ from rest_framework.views import (
     exception_handler as drf_exception_handler
 )
 from rest_framework import status
-from rest_framework.response import Response
 from django.http import Http404
 from rest_framework.exceptions import (
     NotAuthenticated,
     PermissionDenied,
     NotFound
 )
+
 
 def custom_exception_handler(exc, context):
     """
@@ -38,6 +38,5 @@ def custom_exception_handler(exc, context):
             custom_data = {'detail': 'Страница не найдена.'}
             response.data = custom_data
             response.status_code = status.HTTP_404_NOT_FOUND
-
 
     return response

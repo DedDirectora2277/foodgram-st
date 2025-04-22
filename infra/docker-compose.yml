@@ -33,10 +33,10 @@ services:
     container_name: foodgram-front
     build: ../frontend
     volumes:
-      - static_volume:/app/static/
-    command: >
-      sh -c "echo 'Copying frontend build to static volume...' &&
-             cp -r /app/result_build/. /app/static/"
+      - static_volume:/app/result_build/
+    # command: >
+    #   sh -c "echo 'Copying frontend build to static volume...' &&
+    #          cp -r /app/result_build/. /app/static/"
 
   nginx:
     container_name: foodgram-proxy

@@ -1,4 +1,4 @@
-exclude = .git,__pycache__,*/migrations/*,venv/
+exclude = .git,__pycache__,*/migrations/*,*/venv/
 per-file-ignores =
     */settings.py:E501
 ignore = W503

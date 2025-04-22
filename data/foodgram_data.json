@@ -4,7 +4,7 @@
   "pk": 1,
   "fields": {
     "password": "pbkdf2_sha256$600000$123Ibt6X2qyvBp3oBxW49c$N3W2c1dZrNUwCgdzyg6x0wnn/mJaO/pMo7se6MyWqhc=",
-    "last_login": "2025-04-22T11:10:19.743Z",
+    "last_login": "2025-04-22T19:01:41.840Z",
     "date_joined": "2025-04-21T19:05:36.617Z",
     "email": "director@deda.ru",
     "username": "DirectorDeda",
@@ -23,7 +23,7 @@
   "pk": 2,
   "fields": {
     "password": "pbkdf2_sha256$600000$vNUYH00g3sTsSvhoXGnQXd$FoQPkw3pAPmWpb0Hp7Jt//46h7JJOCoxL2DtTOUt9LY=",
-    "last_login": "2025-04-22T10:56:09.159Z",
+    "last_login": "2025-04-22T19:52:08.189Z",
     "date_joined": "2025-04-22T10:53:28.063Z",
     "email": "admin@example.com",
     "username": "admin",
@@ -42,7 +42,7 @@
   "pk": 3,
   "fields": {
     "password": "pbkdf2_sha256$600000$NvjuSj3oWDyqwIlmVBsRRN$pKeLsoUcjfahFJ/nWAq972ItdnZ3XOzlTDc+Xh/1skQ=",
-    "last_login": "2025-04-22T11:01:41.492Z",
+    "last_login": "2025-04-22T19:53:00.461Z",
     "date_joined": "2025-04-22T11:01:26.875Z",
     "email": "ded@directora.com",
     "username": "DedDirectora",
@@ -17584,6 +17584,217 @@
     "text": "1. Натрите сыр на мелкой терке.\n2. Нарежьте колбасу небольшими кусочками.\n3. Нарежьте немного укропа (несколько веточек).\n4. Смешайте ингредиенты и заправьте майонезом — начинка готова.\n5. Разверните лаваш.\n6. Намажьте лаваш тонким слоем начинки.\n7. Сверните лаваш в рулет, нарежьте кусочками.",
     "cooking_time": 15,
     "pub_date": "2025-04-22T11:06:25.114Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 4,
+  "fields": {
+    "author": [
+      "director@deda.ru"
+    ],
+    "name": "Мука 1",
+    "image": "recipes/7a789462-7cd8-4015-8a02-8ecc38c252b0.jpeg",
+    "text": "Мука",
+    "cooking_time": 1,
+    "pub_date": "2025-04-22T19:02:40.346Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 5,
+  "fields": {
+    "author": [
+      "director@deda.ru"
+    ],
+    "name": "Мука 2",
+    "image": "recipes/3984e56e-60ea-4340-a16c-42c18880a777.jpeg",
+    "text": "Мука 2",
+    "cooking_time": 2,
+    "pub_date": "2025-04-22T19:03:11.837Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 6,
+  "fields": {
+    "author": [
+      "director@deda.ru"
+    ],
+    "name": "Мука 3",
+    "image": "recipes/af848ce9-33c0-4d1d-a7bb-9a717b3e785f.jpeg",
+    "text": "Мука 3",
+    "cooking_time": 4,
+    "pub_date": "2025-04-22T19:03:37.777Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 7,
+  "fields": {
+    "author": [
+      "director@deda.ru"
+    ],
+    "name": "Мука 4",
+    "image": "recipes/7524de8f-d776-48bd-b4a6-9fa3446aebc5.jpeg",
+    "text": "Мука 4",
+    "cooking_time": 5,
+    "pub_date": "2025-04-22T19:03:58.243Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 8,
+  "fields": {
+    "author": [
+      "director@deda.ru"
+    ],
+    "name": "Мука 5",
+    "image": "recipes/e5a2895f-7c46-43b0-928d-1c73b3370bab.jpeg",
+    "text": "Мука 5",
+    "cooking_time": 4,
+    "pub_date": "2025-04-22T19:09:20.593Z"
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 1,
+  "fields": {
+    "recipe": 4,
+    "ingredient": 1081,
+    "amount": 213
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 2,
+  "fields": {
+    "recipe": 5,
+    "ingredient": 1083,
+    "amount": 123
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 3,
+  "fields": {
+    "recipe": 6,
+    "ingredient": 1083,
+    "amount": 431
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 5,
+  "fields": {
+    "recipe": 8,
+    "ingredient": 1089,
+    "amount": 123
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 6,
+  "fields": {
+    "recipe": 7,
+    "ingredient": 1081,
+    "amount": 4231
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 7,
+  "fields": {
+    "recipe": 2,
+    "ingredient": 897,
+    "amount": 300
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 8,
+  "fields": {
+    "recipe": 2,
+    "ingredient": 2180,
+    "amount": 400
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 9,
+  "fields": {
+    "recipe": 3,
+    "ingredient": 897,
+    "amount": 200
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 10,
+  "fields": {
+    "recipe": 3,
+    "ingredient": 657,
+    "amount": 200
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 11,
+  "fields": {
+    "recipe": 3,
+    "ingredient": 899,
+    "amount": 100
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 12,
+  "fields": {
+    "recipe": 3,
+    "ingredient": 1890,
+    "amount": 25
+  }
+},
+{
+  "model": "recipes.recipeingredient",
+  "pk": 13,
+  "fields": {
+    "recipe": 3,
+    "ingredient": 812,
+    "amount": 300
+  }
+},
+{
+  "model": "recipes.shoppingcart",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "director@deda.ru"
+    ],
+    "recipe": 4,
+    "added_date": "2025-04-22T19:21:30.478Z"
+  }
+},
+{
+  "model": "recipes.shoppingcart",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "director@deda.ru"
+    ],
+    "recipe": 5,
+    "added_date": "2025-04-22T19:21:31.285Z"
+  }
+},
+{
+  "model": "recipes.shoppingcart",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "director@deda.ru"
+    ],
+    "recipe": 6,
+    "added_date": "2025-04-22T19:21:33.244Z"
   }
 }
 ]

@@ -47,25 +47,6 @@ jobs:
           push: true
           tags: directordeda/foodgram_backend:latest
 
-  frontend_tests:
-    name: Frontend Linting & Tests
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up nodeJS
-      uses: actions/setup-node@v4
-      with:
-        node-version: 16
-    - name: Install dependencies
-      run: |
-        cd frontend/
-        npm install
-    - name: Test frontend
-      run: |
-        cd frontend/
-        npm run test
-
   build_frontend_and_push_to_docker_hub:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest

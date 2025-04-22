@@ -1,6 +1,7 @@
 frontend/node_modules
 infra/frontend/build
 backend/foodgram_backend/meida
+backend/foodgram_backend/static_backend
 .env
 
 # Byte-compiled / optimized / DLL files

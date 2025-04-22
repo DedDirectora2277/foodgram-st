@@ -120,4 +120,4 @@ Foodgram - это веб-приложение для публикации рец
 
 ## Автор
 
-*   [DedDirectora]
+*   [DedDirectora](https://github.com/DedDirectora2277/)

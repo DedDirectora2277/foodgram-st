@@ -1,0 +1,88 @@
+name: Main Foodgram workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Backend Linting & Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ./backend/requirements.txt
+        pip install ruff==0.8.0
+    - name: Lint with ruff
+      run: python -m ruff check ./backend/
+
+  build_and_push_to_docker_hub:
+    name: Build & Push Backend Image
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push to DockerHub
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/
+          file: ./backend/
+          push: true
+          tags: directordeda/foodgram_backend:latest
+
+  frontend_tests:
+    name: Frontend Linting & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up nodeJS
+      uses: actions/setup-node@v4
+      with:
+        node-version: 21
+    - name: Install dependencies
+      run: |
+        cd frontend/
+        npm ci
+    - name: Test frontend
+      run: |
+        cd frontend/
+        npm run test
+
+  build_frontend_and_push_to_docker_hub:
+    name: Build & Push Frontend Image
+    runs-on: ubuntu-latest
+    needs: frontend_tests
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker 
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push to DockerHub
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend/
+          push: true
+          tags: directordeda/foodgram_frontend:latest

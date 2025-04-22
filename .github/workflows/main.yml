@@ -43,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend/
-          file: ./backend/
+          file: ./backend/foodgram_backend/Dockerfile
           push: true
           tags: directordeda/foodgram_backend:latest
 
@@ -60,7 +60,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/
-        npm ci
+        npm install
     - name: Test frontend
       run: |
         cd frontend/

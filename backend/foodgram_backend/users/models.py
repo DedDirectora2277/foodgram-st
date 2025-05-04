@@ -1,6 +1,7 @@
 import re
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import RegexValidator
 
 from constants import (
@@ -8,15 +9,6 @@ from constants import (
     USER_FIRST_NAME_MAX_LENGTH,
     USER_LAST_NAME_MAX_LENGTH,
     USER_USERNAME_MAX_LENGTH,
-    USERNAME_INVALID_MESSAGE,
-    ALLOW_UNICODE_USERNAMES
-)
-
-
-validate_username_regex = RegexValidator(
-    regex=r'^[\w.@+-]+$',
-    message=USERNAME_INVALID_MESSAGE,
-    flags=re.ASCII if not ALLOW_UNICODE_USERNAMES else 0
 )
 
 
@@ -30,7 +22,7 @@ class User(AbstractUser):
     """
 
     # Валидатор используется ниже для username
-    username_validator = validate_username_regex
+    username_validator = UnicodeUsernameValidator
 
     # Переопределение поля email, чтобы сделать его уникальным
     email = models.EmailField(
@@ -67,36 +59,6 @@ class User(AbstractUser):
     last_name = models.CharField(
         verbose_name='Фамилия',
         max_length=USER_LAST_NAME_MAX_LENGTH
-    )
-
-    # Переопределение is_staff
-    is_staff = models.BooleanField(
-        verbose_name='Статус персонала',
-        default=False,
-        help_text=(
-            'Определяет, имеет ли пользователь доступ '
-            'к панели администратора'
-        )
-    )
-
-    # Переопределение is_active
-    is_active = models.BooleanField(
-        verbose_name='Активный',
-        default=True,
-        help_text=(
-            'Определяет, следует ли считать этого пользователя активным.\n'
-            'Снимите этот флажок вместо удаления учетной записи.'
-        )
-    )
-
-    # Переопределение is_superuser
-    is_superuser = models.BooleanField(
-        verbose_name='Статус администратора',
-        default=False,
-        help_text=(
-            'Определяет, что пользователь имеет все права '
-            'без явного их назначения.'
-        )
     )
 
     # Определение поля для аватара

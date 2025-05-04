@@ -1,11 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
-from djoser.serializers import (
-    UserCreateSerializer as BaseUserCreateSerializer,
-    UserSerializer as BaseUserSerializer
-)
-
 from drf_extra_fields.fields import Base64ImageField
 
 from constants import (
@@ -26,26 +21,7 @@ from recipes.models import (
 User = get_user_model()
 
 
-class UserCreateSerializer(BaseUserCreateSerializer):
-    """
-    Сериализатор для создания пользователей.
-    Использует все обязательные поля из модели User.
-    """
-
-    class Meta(BaseUserCreateSerializer.Meta):
-        model = User
-
-        fields = (
-            'id',
-            'email',
-            'username',
-            'first_name',
-            'last_name',
-            'password'
-        )
-
-
-class UserSerializer(BaseUserSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для отображения данных пользователей.
     Включает поле is_subscribed для проверки
@@ -54,7 +30,7 @@ class UserSerializer(BaseUserSerializer):
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
-    class Meta(BaseUserSerializer.Meta):
+    class Meta():
         model = User
 
         fields = (

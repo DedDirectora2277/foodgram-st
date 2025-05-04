@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
 from drf_extra_fields.fields import Base64ImageField
 
 from constants import (
@@ -175,7 +176,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountWriteSerializer(many=True,
                                                   required=True)
     image = Base64ImageField(required=True, allow_null=False)
-    author = UserSerializer(read_only=True)
+    author = serializers.HiddenField(default=CurrentUserDefault())
 
     class Meta:
         model = Recipe

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Exists, OuterRef, Sum
+from django.db.models import Sum
 from django.views import View
 
 from rest_framework import (
@@ -199,35 +199,16 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для управления рецептами"""
 
-    queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = RecipeFilter
-    search_fields = ['^name']
 
     def get_queryset(self):
         """
-        Аннотирование queryset статусами для авторизованных пользователей
+        Возвращает queryset рецептов, оптимизированный и аннотированный
+        с использованием кастомного менеджера модели.
         """
-
-        user = self.request.user
-        queryset = (
-            Recipe.objects
-            .select_related('author')
-            .prefetch_related('recipe_ingredients__ingredient')
-        )
-        if user.is_authenticated:
-            queryset = queryset.annotate(
-                is_favorited=Exists(
-                    Favorite.objects.filter(user=user,
-                                            recipe_id=OuterRef('pk'))
-                ),
-                is_in_shopping_cart=Exists(
-                    ShoppingCart.objects
-                    .filter(user=user, recipe_id=OuterRef('pk'))
-                )
-            )
-        return queryset
+        return Recipe.objects.get_recipes_for_user(self.request.user)
 
     def get_serializer_class(self, *args, **kwargs):
         """Выбор сериализатора в зависимости от действия"""
@@ -235,11 +216,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('create', 'update', 'partial_update'):
             return RecipeWriteSerializer
         return RecipeReadSerializer
-
-    def perform_create(self, serializer):
-        """Установка автора при создании рецепта"""
-
-        serializer.save(author=self.request.user)
 
     @action(
         detail=True,

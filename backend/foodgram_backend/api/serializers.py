@@ -6,6 +6,8 @@ from djoser.serializers import (
     UserSerializer as BaseUserSerializer
 )
 
+from drf_extra_fields.fields import Base64ImageField
+
 from constants import (
     RECIPES_LIMIT_IN_SUBSCRIPTION_DEFAULT,
     MIN_COOKING_TIME_VALUE,
@@ -19,8 +21,6 @@ from recipes.models import (
     Favorite,
     ShoppingCart
 )
-
-from .fields import Base64ImageField
 
 
 User = get_user_model()

@@ -194,7 +194,6 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     pagination_class = None
     filter_backends = [IngredientNameSearchFilter]
-    search_fields = ['^name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

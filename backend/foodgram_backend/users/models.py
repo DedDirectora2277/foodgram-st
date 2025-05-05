@@ -1,8 +1,6 @@
-import re
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.validators import RegexValidator
 
 from constants import (
     USER_EMAIL_MAX_LENGTH,

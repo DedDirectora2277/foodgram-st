@@ -31,7 +31,9 @@ from .serializers import (
     IngredientSerializer,
     RecipeReadSerializer,
     RecipeWriteSerializer,
-    SubscriptionSerializer
+    SubscriptionSerializer,
+    SubscriptionCreateDeleteSerializer,
+    UserRecipeRelationSerializer
 )
 from .permissions import IsAuthorOrReadOnly
 from .filters import RecipeFilter, IngredientNameSearchFilter
@@ -113,46 +115,35 @@ class UserViewSet(DjoserUserViewSet):
         от пользователя по id.
         """
 
-        user = request.user
-        author = get_object_or_404(User, id=id)
+        request_author = get_object_or_404(User, id=id)
+        current_user = request.user
 
-        if user == author:
-            return Response(
-                {'detail': 'Вы не можете подписываться на самого себя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        subscription_exists = Subscription.objects.filter(
-            user=user, author=author
-        ).exists()
+        serializer_kwargs = {
+            'data': {'author': request_author.pk},
+            'context': {'request': request}
+        }
 
         if request.method == 'POST':
-            if subscription_exists:
-                return Response(
-                    {'detail': 'Вы уже подписаны на этого пользователя'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Subscription.objects.create(user=user, author=author)
 
-            serializer = SubscriptionSerializer(
-                author, context={'request': request}
+            post_serializer = SubscriptionCreateDeleteSerializer(
+                **serializer_kwargs
             )
-            return Response(serializer.data,
+            post_serializer.is_valid(raise_exception=True)
+            post_serializer.save()
+
+            response_serializer = SubscriptionSerializer(
+                request_author, context={'request': request}
+            )
+            return Response(response_serializer.data,
                             status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            if not subscription_exists:
-                return Response(
-                    {
-                        'detail':
-                        'Вы не были подписаны на этого пользователя'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
-            deleted_count, _ = Subscription.objects.filter(
-                user=user, author=author
-            ).delete()
+            subscription_instance = get_object_or_404(
+                Subscription, user=current_user,
+                author=request_author
+            )
+            subscription_instance.delete()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -194,6 +185,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     pagination_class = None
     filter_backends = [IngredientNameSearchFilter]
+    search_fields = ['^name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -235,34 +227,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                                  ShoppingCart)
 
     def _manage_user_recipe_relation(self, request, pk, model):
-        user = request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
-        relation_exists = model.objects.filter(
-            user=user, recipe=recipe
-        ).exists()
+        serializer = UserRecipeRelationSerializer(
+            data={},
+            context={
+                'request': request,
+                'view': self,
+                'model_class': model
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data['user']
+        recipe = serializer.validated_data['recipe']
 
         if request.method == 'POST':
-            if relation_exists:
-                return Response(
-                    {'detail': f'Рецепт уже добавлен в '
-                     f'{model._meta.verbose_name_plural}.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+
             model.objects.create(user=user, recipe=recipe)
-            serializer = RecipeShortSerializer(
+            response_serializer = RecipeShortSerializer(
                 recipe, context={'request': request}
             )
-            return Response(serializer.data,
+            return Response(response_serializer.data,
                             status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            if not relation_exists:
-                return Response(
-                    {'detail':
-                     f'Рецепта нет в {model._meta.verbose_name_plural}.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            model.objects.filter(user=user, recipe=recipe).delete()
+
+            relation_instance = get_object_or_404(
+                model, user=user, recipe=recipe
+            )
+            relation_instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 

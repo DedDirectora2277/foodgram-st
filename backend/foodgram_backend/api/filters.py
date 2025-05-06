@@ -45,6 +45,3 @@ class IngredientNameSearchFilter(rest_filters.SearchFilter):
     вместо стандартного 'search'.
     """
     search_param = "name"
-
-    def get_search_fields(self, view, request):
-        return ['^name']

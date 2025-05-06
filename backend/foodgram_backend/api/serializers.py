@@ -18,6 +18,8 @@ from recipes.models import (
     ShoppingCart
 )
 
+from subscriptions.models import Subscription
+
 
 User = get_user_model()
 
@@ -165,7 +167,7 @@ class IngredientAmountWriteSerializer(serializers.Serializer):
         queryset=Ingredient.objects.all()
     )
     amount = serializers.IntegerField(
-        min_value=1,
+        min_value=MIN_AMOUNT_VALUE,
         error_messages={'min_value': 'Количество должно быть не меньше 1'}
     )
 
@@ -324,3 +326,117 @@ class SubscriptionSerializer(UserSerializer):
             recipes_queryset, many=True, context=self.context
         )
         return serializer.data
+
+
+class SubscriptionCreateDeleteSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания подписки.
+    Поле 'user' устанавливается автоматически из текущего
+    запроса.
+    Поле 'author' должно быть передано в параметрах запроса.
+    """
+
+    user = serializers.HiddenField(default=CurrentUserDefault())
+    author = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+
+    class Meta:
+        model = Subscription
+        fields = ('user', 'author')
+
+    def validate_author(self, value):
+        request_user = self.context['request'].user
+        if request_user == value:
+            raise serializers.ValidationError(
+                'Вы не можете подписываться на самого себя.'
+            )
+        return value
+
+    def validate(self, data):
+        """
+        Проверка того, что подписка ещё не существует при создании,
+        или существует при удалении
+        """
+
+        request = self.context.get('request')
+        user = data['user']
+        author = data['author']
+
+        http_method = request.method
+        subscription_exists = Subscription.objects.filter(
+            user=user, author=author
+        ).exists()
+
+        if http_method == 'POST':
+            if subscription_exists:
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на этого пользователя.'
+                )
+        elif http_method == 'DELETE':
+            if not subscription_exists:
+                raise serializers.ValidationError(
+                    'Вы не были подписаны на этого пользователя'
+                )
+
+        return data
+
+
+class UserRecipeRelationSerializer(serializers.Serializer):
+    """
+    Сериализатор для валидации данных перед созданием или удалением
+    связи User-Recipe (Favorite, ShoppingCart).
+    """
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        view = self.context.get('view')
+        model_class = self.context.get('model_class')
+
+        if not all([request, view, model_class]):
+            raise serializers.ValidationError(
+                'Нужен контекст запроса, представления и model_class'
+            )
+
+        current_user = request.user
+        recipe_id_from_url = view.kwargs.get('pk')
+
+        if recipe_id_from_url is None:
+            raise serializers.ValidationError(
+                "ID рецепта не указан в URL."
+            )
+
+        try:
+            recipe_to_interact_with = Recipe.objects.get(
+                pk=recipe_id_from_url
+            )
+        except Recipe.DoesNotExist:
+            raise serializers.ValidationError(
+                "Рецепт с таким ID не найден."
+            )
+
+        http_method = request.method
+        relation_exists = model_class.objects.filter(
+            user=current_user, recipe=recipe_to_interact_with
+        ).exists()
+
+        verbose_name_plural = (
+            model_class._meta.verbose_name_plural.lower()
+        )
+
+        if http_method == 'POST':
+            if relation_exists:
+                raise serializers.ValidationError(
+                    f'Рецепт уже добавлен в {verbose_name_plural}'
+                )
+        elif http_method == 'DELETE':
+            if not relation_exists:
+                raise serializers.ValidationError(
+                    f'Этого рецепта нет в {verbose_name_plural}'
+                )
+
+        return {
+            'user': current_user,
+            'recipe': recipe_to_interact_with,
+            'model_class': model_class
+        }

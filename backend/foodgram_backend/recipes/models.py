@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models import Exists, OuterRef
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
@@ -42,54 +41,6 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
-
-
-class RecipeQuerySet(models.QuerySet):
-    """Кастомный QuerySet для модели Recipe."""
-
-    def optimize_for_read(self):
-        """Применяет select_related и prefetch_related для чтения."""
-        return self.select_related('author').prefetch_related(
-            'recipe_ingredients__ingredient'
-        )
-
-    def annotate_user_status(self, user):
-        """
-        Аннотирует queryset статусами 'is_favorited' и
-        'is_in_shopping_cart' для данного пользователя,
-        если он аутентифицирован.
-        """
-        if user and user.is_authenticated:
-            return self.annotate(
-                is_favorited=Exists(
-                    Favorite.objects.filter(user=user,
-                                            recipe_id=OuterRef('pk'))
-                ),
-                is_in_shopping_cart=Exists(
-                    ShoppingCart.objects.filter(user=user,
-                                                recipe_id=OuterRef('pk'))
-                )
-            )
-        return self.annotate(is_favorited=models.Value(False),
-                             is_in_shopping_cart=models.Value(False))
-
-
-class RecipeManager(models.Manager):
-    """Кастомный менеджер для модели Recipe."""
-
-    def get_queryset(self):
-        return RecipeQuerySet(self.model, using=self._db)
-
-    def get_recipes_for_user(self, user):
-        """
-        Возвращает оптимизированный и аннотированный (если user есть)
-        queryset для использования во ViewSet.
-        """
-        return (
-            self.get_queryset()
-            .optimize_for_read()
-            .annotate_user_status(user)
-        )
 
 
 class Recipe(models.Model):
@@ -140,8 +91,6 @@ class Recipe(models.Model):
         auto_now_add=True,
         db_index=True
     )
-
-    objects = RecipeManager()
 
     class Meta:
         verbose_name = 'Рецепт'

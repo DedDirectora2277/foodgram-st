@@ -191,16 +191,10 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для управления рецептами"""
 
+    queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = RecipeFilter
-
-    def get_queryset(self):
-        """
-        Возвращает queryset рецептов, оптимизированный и аннотированный
-        с использованием кастомного менеджера модели.
-        """
-        return Recipe.objects.get_recipes_for_user(self.request.user)
 
     def get_serializer_class(self, *args, **kwargs):
         """Выбор сериализатора в зависимости от действия"""
